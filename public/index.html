@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Movie Downloader</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="js/downloadScript.js"></script>
+<script src="js/socketio.1.2.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<meta name="viewport" content="width=device-width">
+</head>
+<body>
+	<div id="closeButton">&#10006;</div>
+	<div id="searchContainer">
+		<div id="searchResults"></div>
+		<div id="progressBar"><div></div></div>
+	</div>
+	<div id="nonSearchContainer"></div>
+	
+<div id="content">
+	<div id="Navigation">
+		<div id="header">TeraFlix</div>
+		<div id="userName"></div>
+		<div class="loader"></div>
+		<div id="upperTabs" class="active"><div id="browseTab" class="tab">Browse</div><div id="searchTab" class="tab">Search</div><div id="downloadsTab" class="tab">Active</div></div>
+		<div id="upperDivider" class="divider"></div>
+		<div id="lowerTabs">
+			<div id="newMoviesBrowseTab" class="tab browseToggle toggle">New</div>
+			<!--
+			<div id="genreBrowseTab" class="tab browseToggle toggle">Genre</div>
+			<div id="popularBrowseTab" class="tabs browseToggle toggle">Popular</div> !-->
+			
+			<div id="titleSearchTab" class="tab searchToggle toggle">Title</div>
+			<div id="actorSearchTab" class="tab searchToggle toggle">Actor</div>
+			<div id="currentlyDownloadingTab" class="tab downloadToggle toggle">Download Status</div>
+		</div>
+		<div id="lowerDivider" class="divider"></div>
+	</div>
+	<div id="AllContentStart">
+		<div id="browseContent" class="arrow browseToggle toggle">
+			<div id="browsePrevious" class="arrow leftArrow"><i class="arrow left"></i> Prev</div>
+			<div id="browseMore" class="arrow rightArrow">Next <i class="arrow right"></i></div>
+			<div id="browseNewContent" class="browseToggle toggle"></div>
+		</div>
+		<div id="searchContent" class="searchToggle toggle">
+			<div id="titleSearchContent" class="toggle">
+				<input id="movieSearchBox" type="search" placeholder="Search for a movie">
+				
+				<div id="movieResults"></div>
+
+			</div>
+			<div id="actorSearchContent" class="toggle" style="display:none">
+				<input id="actorSearchBox" type="search" placeholder="Search for an actor">
+				<div id="actorMovieResults"></div>
+			</div>
+		</div>
+		<div id="downloadContent" class="downloadToggle toggle">
+			<div id="moviesDownloading"></div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

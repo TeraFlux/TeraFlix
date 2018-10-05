@@ -1,0 +1,22 @@
+{
+  "name": "TeraFlix",
+  "version": "0.0.1",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.13.3",
+    "node-fetch": "1.7.3",
+    "cheerio": "latest",
+    "fetch-cookie": "latest",
+    "xml2js-parser": "latest",
+    "socket.io": "^1.7.3",
+    "bittorrent-tracker-proxy": "latest",
+    "magnet-uri": "latest",
+    "greenlock-express": "latest",
+    "passport-google-oauth20": "latest",
+    "passport": "latest",
+    "cookie-parser": "latest",
+    "cookie-session": "latest"
+  },
+  "author": "Keith Klein",
+  "license": "MIT"
+}

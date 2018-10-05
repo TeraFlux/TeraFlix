@@ -1,0 +1,418 @@
+*{
+padding:0;
+margin:0;	
+
+}
+body{
+	background-color:#D3D3D3;
+	user-select: none;
+}
+h1,h2,h3,span,div{
+	text-align:center;
+}
+.divider{
+
+	width:100%;
+	height:2px;
+	background-color:blue;
+
+}
+
+input[type="search"] {
+
+	 position: relative;
+	 display: block;
+	 margin : 0 auto;
+	 height:30px;
+	 width:20em;
+	 border:1px solid #B8B8B8;
+	 	 margin-top:5px;
+}
+#header{
+	height:25px;
+}
+.sync{
+
+	display:block;
+	float:right;
+	width:20px;
+	height:20px;
+	background-size:cover;
+	background-image:url(../img/sync.png);
+	cursor:pointer;
+	background-color: #D3D3D3;
+	margin-top:3px;
+}
+
+@-webkit-keyframes animate {
+  0%, 49% {
+    background-color: yellow;
+  }
+  50%, 100% {
+    background-color: lime;
+  }
+}
+
+#searchContainer{
+	position:fixed;
+	width:90%;
+	height:80%;
+	top:5%;
+	left:5%;
+	z-index:5;
+	display:none;
+	background-color:gray;
+	overflow-y:auto;
+	border-radius: 20px;
+
+}
+#searchContainer h3{
+	border-bottom:2px solid black;
+}
+#closeButton{
+	display:none;
+	position:fixed;
+	right:5%;
+	top:5%;
+	height:30px;
+	width:30px;
+	margin-top:-15px;
+	margin-right:-15px;
+	border-radius:30px;
+	border:2px solid black;
+	z-index:10;
+	line-height:30px;
+	cursor:pointer;
+	background-color:white;
+}
+#nonSearchContainer{
+	position:fixed;
+	width:100%;
+	height:100%;
+	z-index:3;
+	display:none;
+}
+.downloadMovie{
+	text-align:center;
+	cursor:pointer;
+}
+#torrentTable{
+	width:100%;
+	border-collapse:collapse;
+}
+#torrentTable td{
+	cursor:pointer;
+}
+#torrentTable td{
+	border-bottom: 1px solid black; 
+	padding:5px 5px;
+}
+#torrentTable tr:hover{
+	background-color:#D3D3D3
+}
+.movieThumb,.downloadingThumb,.notDownloadingThumb,.actorThumb{
+	box-shadow:5px 5px gray;
+	width:270px;
+	height:408px;
+	margin:5px;
+	cursor:pointer;
+	border:2px solid black;
+	display:inline-block;
+	background-color:black;
+	background-size:cover;
+	color:white;
+	font-size:200%;
+	overflow:hidden;
+	position:relative;
+}
+
+.notDownloadingThumb{
+	box-shadow:none;
+}
+.notDownloadingThumb:before {
+	position:absolute;
+	left:0px;
+	content:'\2713';
+	display:inline-block;
+	vertical-align: top;
+	line-height: 1.2em;
+	width: 98%;
+	height:1em;
+	margin-right: 0.3em;
+	text-align: right;
+	font-size:1.3em;
+	color: #00FF00;
+}
+
+.downloadingWrapper{
+	
+	display:inline-block;
+}
+.downloadingThumb{
+	font-size:150%;
+}
+.downloadingStatus{
+	text-align:center;
+	font-size:80%;
+	overflow:hidden;
+	
+}
+.loader {
+	position:fixed;
+	left:calc(50% - 80px);
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+	margin-top:20px;
+	margin:auto;
+    width: 120px;
+	top:calc(50% - 80px);
+    height: 120px;
+    animation: spin 2s linear infinite;
+	z-index:100;
+	display:none;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.movieDBButton{
+	position:absolute;
+	top:5px;
+	right:5px;
+	width:35px;
+	height:35px;
+	padding:2px;
+	background-color:#C8C8C8;
+	color:black;
+	line-height:36px;
+	box-shadow: 0 0 5px 5px gray;
+	display:none;
+	cursor:pointer;
+}
+.downloadButton,.cancelMovie{
+	display:none;
+	position:absolute;
+	width:96%;
+	height:20%;
+	font-size:1em;
+	line-height:230%;
+	margin-left:2%;
+	margin-right:2%;
+	background-color:#009933;
+	box-shadow: 0 0 5px 5px #000000;
+	bottom:2%;
+	border:1px solid black;
+	cursor:pointer;
+}
+.cancelMovie{
+	background-color:#cccc00;
+	font-size:1em;
+	line-height:300%;
+	color:black;
+	display:none;
+}
+.downloadButton:hover{
+	text-decoration:underline;
+}
+.movieTitle{
+	display:none;
+	position:absolute;
+	top:45px;
+	font-size: 1.2em;
+	left:0px;
+	width:100%;
+	height:80%;
+	pointer-events:none;
+}
+.downloadingThumb .movieTitle{
+	font-size: 1.7em;
+}
+
+.downloadMessage{
+	background-color:black;
+	opacity:.9;
+	font-size:.8em;
+	box-shadow: 0 0 15px 15px #000000;
+}
+.loadingBar{
+	position:absolute;
+	bottom:0px;
+	height:10px;
+	background-color:lime;
+	display:block !important;
+}
+.actorTitle{
+	width:100%;
+	display:block;
+	padding:5px;
+	background-color:black;
+	opacity:.7;
+}
+
+#upperTabs{
+	width:100%;
+	height:20px;
+	padding:2px 0px;
+}
+#lowerTabs{
+	width:100%;
+	height:20px;
+	padding:2px 0px;
+}
+.tab{
+	padding:1px;
+	display:inline;
+	background-color:#D3D3D3;
+	padding:0px 9px 0px 9px;
+	cursor:pointer;
+	font-size:1.1em;
+	
+}
+
+.rightArrow,.leftArrow {
+	display:none;
+	margin-top:-28px;
+	width: 50px;
+	height:27px;
+	cursor:pointer;
+	line-height:27px;
+	position: absolute;
+
+}
+.rightArrow{
+    right: 0px;
+	margin-left:-40px;
+}
+.leftArrow{
+	left:0px;
+}
+.leftArrow:hover{
+	color:lime;
+}
+.rightArrow:hover{
+	color:lime;
+}
+
+.tab:hover{
+	background-color:#c9c9c9;
+}
+.tab.active{
+	cursor:default;
+	background-color:#a9a9a9;
+}
+.tab.active:hover{
+	cursor:default;
+	background-color:#a9a9a9;
+}
+#actorSearchContent{
+	display:none;
+}
+#downloadContent{
+	display:none;
+}
+.currentlyDownloading{
+	border:dotted 3px yellow;
+}
+.toggle{
+	display:inline-block;
+}
+
+i {
+    border: solid black;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+}
+
+.right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+}
+
+.left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+}
+
+#progressBar {
+	position: absolute;
+	width:100%;
+	bottom:0;
+	height:22px;
+	border-bottom-left-radius: 20px;
+	border-bottom-right-radius: 20px;
+}
+
+#progressBar div {
+	height: 100%;
+	text-align: right;
+	padding: 0 10px;
+	line-height: 22px;
+	width: 0;
+	background-color: #88d664;
+	box-sizing: border-box;
+}
+#searchContainer{
+	
+	padding:10px 0px;
+}
+#torrentSearchName{
+	width: 80%;
+    text-align: center;
+	margin-right:5px;
+}
+#userName{
+	position:absolute;
+	top:5px;
+	right:5px;
+	padding:5px;
+	color:black;
+	font-family:Helvetica;
+}
+@media only screen and (max-device-width: 360px) {
+	
+	.rightArrow,.leftArrow {
+		margin-top:-34px;
+	}
+	.movieThumb,.downloadingThumb,.notDownloadingThumb,.actorThumb{
+		width:143px;
+		height:216px;
+	}
+	#movieDLSpan{
+		text-align:center;
+		width:100%;
+		display:block;
+	}
+	input[type="search"] {
+		 height:20px;
+		 width:10em;
+	}
+	.downloadButton{
+		font-size:.5em;
+		line-height:280%;
+	}
+	.cancelMovie{
+		font-size:.6em;
+		line-height:300%;
+	}
+	.movieTitle{
+		top:45px;
+		font-size: .7em;
+	}
+	.downloadingThumb .movieTitle{
+		top:55px;
+		font-size: .9em;
+	}
+	.downloadMessage{
+		font-size:.6em;
+	}
+	.divider{
+
+		width:100%;
+		height:2px;
+		margin:3px;
+		background-color:blue;
+
+	}
+}

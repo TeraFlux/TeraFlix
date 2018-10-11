@@ -86,8 +86,7 @@ app.get('/searchMovieYear',function(req,res,next){
 	console.log("Searching Movie Year");
 	imdbClient.searchIMDBYear(req.query.imdbID,function(result){
 		res.send(result)
-	})
-	
+	});
 });
 
 app.get('/getRedBox', function (req, res, next) {
@@ -97,8 +96,13 @@ app.get('/getRedBox', function (req, res, next) {
 	})
 });
 
-plexClient.cacheAllMDBIDsToDisk(function(){
-	setInterval(function(){
-		plexClient.updatePlexMDBMapping();
-	},15000);
-});
+function updatePlexInterval(interval){
+	plexClient.updatePlexMDBMapping(function(){
+		setTimeout(function(){ 
+			updatePlexInterval(interval);
+		}, interval);
+	});
+	
+}
+
+updatePlexInterval(20000);

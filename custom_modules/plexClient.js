@@ -4,19 +4,19 @@ const parseString = require('xml2js-parser').parseString;
 var bodyParser = require('body-parser');
 var plexToken=undefined;
 var fs = require('./fileSystemClient.js');
-var cacheInProgress=false;
 
 function getMDBFromPlexID(key,cb){
 	plexWebRequest("/library/metadata/"+key,function(xmlMovie){
-		var guidString=xmlMovie.MediaContainer.Video[0]['$'].guid;
-		cb(guidString.match("://([0-9]*)?")[1],key);
+		var displayName=xmlMovie.MediaContainer.Video[0]['$'].title + " ("+xmlMovie.MediaContainer.Video[0]['$'].year+")";
+		var mdbID=xmlMovie.MediaContainer.Video[0]['$'].guid.match("://([0-9]*)?")[1];
+		cb({"mdbID":mdbID,"displayName":displayName});
 	});
 }
 
-function updatePlexMDBMapping(){
+function updatePlexMDBMapping(cb){
 	plexWebRequest("/library/sections/2/all",function(xmlMovies){
 		var plexMovies=xmlMovies.MediaContainer.Video;
-		fs.readFileCreateIfNotExist(config.MDBToPlexIDPath,function(MDBToPlexIDMapping){		
+		fs.readFileCreateIfNotExist(config.MDBToPlexIDPath,function(MDBToPlexIDMapping){
 			var missingPlexIDs=[];
 			var allPlexMovieIDs=[];
 			var deletedMovie=false;
@@ -30,7 +30,7 @@ function updatePlexMDBMapping(){
 			}
 			//remove deleted items from cache
 			for(var mdbID in MDBToPlexIDMapping){
-				var plexIDInFile=MDBToPlexIDMapping[mdbID]
+				var plexIDInFile=MDBToPlexIDMapping[mdbID];
 				if(allPlexMovieIDs.indexOf(plexIDInFile)===-1){
 					console.log("deleting "+mdbID);
 					deletedMovie=true;
@@ -41,13 +41,15 @@ function updatePlexMDBMapping(){
 				if(missingPlexIDs.length===0){
 					cb(collectedMDBIDs);
 				}else{
-					
 					var pID=missingPlexIDs[missingPlexIDs.length-1];
-					getMDBFromPlexID(pID,function(mdbID){
-						//console.log("adding missing ID"+mdbID+" "+pID);
-						collectedMDBIDs[mdbID]=pID;
-						missingPlexIDs.splice(missingPlexIDs.length-1,1)
-						cacheMissingIDs(missingPlexIDs,collectedMDBIDs,cb)
+					getMDBFromPlexID(pID,function(mdbResult){
+						console.log("adding missing ID: "+mdbResult['mdbID']+" - "+pID+" - "+ mdbResult['displayName']);
+						collectedMDBIDs[mdbResult['mdbID']]=pID;
+						var ouput=missingPlexIDs.splice(missingPlexIDs.length-1,1);
+						//callback to synchronously process, with a timeout to avoid overloading
+						setTimeout(function(){ 
+							cacheMissingIDs(missingPlexIDs,collectedMDBIDs,cb); 
+						}, 300);
 					});
 				}
 			}
@@ -66,52 +68,13 @@ function updatePlexMDBMapping(){
 					}
 					fs.writeFile(config.MDBToPlexIDPath, JSON.stringify(MDBToPlexIDMapping), function(err) {
 						console.log("flushed to disk.");
+						cb();
 					});
 				});
+			}else{
+				cb();
 			}
 		});
-	});
-}
-
-function cacheAllMDBIDsToDisk(cb){
-	cacheInProgress=true;
-	function cacheMDBData(xmlMovies){
-		console.log("Caching Full PlexID to MDBID to disk");
-		function finishedProcessing(){
-				fs.writeFile(config.MDBToPlexIDPath, JSON.stringify(asyncResult), function(err) {
-				cacheInProgress=false;
-				clearTimeout(timer);
-				cb();
-			});
-		}
-		
-		var movies=xmlMovies.MediaContainer.Video;
-		var asyncResult={};
-		var timer=setTimeout(function(){ 
-			console.log("Timed out. Caching current results to disk");
-			finishedProcessing();
-			
-		}, 30000);
-		
-		for(var i=0;i<movies.length;i++){
-			var pID=movies[i]['$'].ratingKey;
-			getMDBFromPlexID(pID,function(mdbID,response){
-				asyncResult[mdbID]=response;
-				
-				if(isNaN(mdbID)){
-					console.log(mdbID);
-				}
-				//console.log("Processing :"+Object.keys(asyncResult).length+ "/" +movies.length);
-				if(Object.keys(asyncResult).length===movies.length-1){
-					console.log("full cache successful!");
-					finishedProcessing();
-				}
-			});
-		}
-	}
-	
-	plexWebRequest("/library/sections/2/all",function(result){
-		cacheMDBData(result);
 	});
 }
 
@@ -178,5 +141,4 @@ function getPlexToken(cb){
 }
 
 module.exports.plexWebRequest=plexWebRequest;
-module.exports.cacheAllMDBIDsToDisk=cacheAllMDBIDsToDisk;
 module.exports.updatePlexMDBMapping=updatePlexMDBMapping;

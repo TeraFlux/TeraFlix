@@ -70,8 +70,7 @@ function getTorrentData(cb){
 function downloadTorrent(req,cb){
 	
 	function parseTorrentNameFromMagnet(mg){
-		return decodeUR
-		IComponent(mg.toString().match(/&dn=(.*?)&tr=/)[1].replace(/\.|\+/g," "));
+		return decodeURIComponent(mg.toString().match(/&dn=(.*?)&tr=/)[1].replace(/\.|\+/g," "));
 	}
 	function downloadTorrent(movieName,movieYear,movieID,magnet,cb){
 		var hash=parseHash(magnet);

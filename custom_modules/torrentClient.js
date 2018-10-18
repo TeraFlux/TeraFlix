@@ -40,16 +40,7 @@ function getTorrentToken(callback){
 	}).catch(function(err){
 		console.log("Torrent Call Fail");
 		console.log(err);
-		
-		if(err.code.toString().includes("ENOBUFS")){
-			process.exit();
-		}
-		if(err.code.toString().includes("EADDRINUSE")){
-			process.exit();
-		}
-		console.log("Torrent Token Call Fail.")
-		console.log(err)}
-	);
+	});
 }
 
 function cancelTorrent(movieHash,cb){
@@ -83,9 +74,10 @@ function downloadTorrent(req,cb){
 			}
 			var url="action=add-url&s="+magnet;
 			torrentCall(url, function(data){
-				console.log("Contents:");
-				downloading[movieID]={'torrentHash':hash,'folderName':movieName + " ("+movieYear+")"};
-				console.log(downloading);
+				console.log("Download Started: ");
+				console.log('torrentHash: '+hash+ ' folderName: '+ movieName + ' ('+movieYear+')');
+				downloading[movieID]={'torrentHash':hash,'folderName':movieName + ' ('+movieYear+')'};
+				//console.log(downloading);
 				var json=JSON.stringify(downloading);
 				fs.writeFile(config.downloadingMoviesPath, json, function(err) {
 					if(err) {

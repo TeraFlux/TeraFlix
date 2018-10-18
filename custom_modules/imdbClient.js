@@ -9,14 +9,8 @@ function searchIMDBYear(imdbID,cb){
 		cb(/\"titleYear\">\(<a href="\/year\/([0-9]{4})/gm.exec(body)[1]);
 	}).catch(function(err){
 		console.log("Search IMDB Movie Year Fail.")
-		console.log(err.code);
-		res.send("fail");
-		if(err.code.toString().includes("ENOBUFS")){
-			process.exit();
-		}
-		if(err.code.toString().includes("EADDRINUSE")){
-			process.exit();
-		}
+		console.log(err);
+		cb("fail");
 	});
 }
 

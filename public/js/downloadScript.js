@@ -131,6 +131,9 @@ function applyClickFunctions(){
 					cb(movieYear);
 				});				
 			},
+			error: function(err){
+				console.log(err);
+			}
 
 		});
 		
@@ -202,7 +205,7 @@ function applyClickFunctions(){
 					movieYear=MovieData.release_date.substring(0,4);
 				}
 				if(movieSearchString===""){
-					movieSearchString=MovieData.title+" ("+movieYear+")";
+					movieSearchString=MovieData.title+" "+movieYear+" 1080p";
 				}
 				var movieSearchData="FindMovie---"+JSON.stringify({"id":movieID,"movieSearch":movieSearchString});
 				torrentResults=[];
@@ -235,6 +238,7 @@ function applyClickFunctions(){
 							var movieYear=MovieData.release_date.substring(0,4);
 							
 							var movieDownloadURI="/downloadMovie?id="+MovieData.id+"&movieName="+encodeURIComponent(MovieData.title)+"&movieYear="+movieYear+"&magnet="+encodeURIComponent(magnet);
+							//console.log("DOWNLOADING: "+movieDownloadURI);
 							$.get( movieDownloadURI, function( serverResponse ) {
 								//console.log(serverResponse);
 								if(serverResponse.indexOf("now downloading!")>-1){
@@ -488,9 +492,8 @@ function findMovie(title){
 	$.get({
 		url: url,
 		success: function( response ) {
-			
-			
 			var movieResults=response.results;
+			//console.log(response.results);
 			if(movieResults.length===0){
 				//call google to resolve title, call movieDB with new title
 				searchMovieTitle(title);

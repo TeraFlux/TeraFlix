@@ -42,13 +42,6 @@ function getRedBoxData(cb){
 	}).catch(function(err){
 		console.log("redbox fetch error")
 		console.log(err);
-		
-		if(err.code.toString().includes("ENOBUFS")){
-			process.exit();
-		}
-		if(err.code.toString().includes("EADDRINUSE")){
-			process.exit();
-		}
 	});
 }
 

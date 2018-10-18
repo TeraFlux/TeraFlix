@@ -4,27 +4,40 @@ module.exports.searchTorrents=function (socket,msg){
 var fetch = require('fetch-cookie')(require('node-fetch'));
 var torrMEURL="https://www.torrentdownloads.me/";
 var limtTorrentsURL="https://www.limetorrents.info/";
+var rarBGURL="https://rarbg.to/";
 var config=require('../config.js');
 
 function ezFetch(url,cb,extra){
+	function retryOnce(){
+		fetch(encodedURL, {
+		method: "GET",
+		timeout: 3000, 
+		}).then(function(res) {
+			return res.text();
+		}).then(function(body) {
+			cb(body,extra);
+		}).catch(function(err){
+			//console.log(err);
+			console.log("Fetch Torrent Site Call Fail. "+encodedURL);
+			console.log(err.message);
+		});
+	}
+	
 	var encodedURL=encodeURI(url);
 	fetch(encodedURL, {
 	method: "GET",
-	timeout: 10000, 
+	timeout: 3000, 
 	}).then(function(res) {
 		return res.text();
 	}).then(function(body) {
 		cb(body,extra);
 	}).catch(function(err){
-		console.log(err);
-		console.log("Fetch Torrent Site Call Fail. "+encodedURL);
-		
-		
-		if(err.code.toString().includes("ENOBUFS")){
-			process.exit();
-		}
-		if(err.code.toString().includes("EADDRINUSE")){
-			process.exit();
+		if(err.message.includes("timeout")){
+			retryOnce()
+		}else{
+		//console.log(err);
+			console.log("Fetch Torrent Site Call Fail. "+encodedURL);
+			console.log(err.message);
 		}
 	});
 	
@@ -33,7 +46,7 @@ function ezFetch(url,cb,extra){
 function findTorrents(socket,msg){
 	
 	function getSeedsForMagnet(magnet,size,cb){
-		var torrentClient = require('bittorrent-tracker-proxy');
+		var torrentClient = require('./bittorrent-tracker-proxy');
 		var _magnet = require('magnet-uri');
 		var parsedTorrent = _magnet(magnet.toString());
 		var options = {
@@ -66,11 +79,10 @@ function findTorrents(socket,msg){
 			}
 		});
 		
-		setTimeout(function(){
-			client.stop();		
+		setTimeout(function(){	
 			client.destroy();
 			cb({"magnet":magnet,"seeds":highestSeed,"size":size.replace("&nbsp;"," ")});
-		}, 8000);
+		}, 10000);
 	}
 
 	function matchRegex(data,regex,count,cb){
@@ -107,7 +119,7 @@ function findTorrents(socket,msg){
 					magnet=magnet.substring(1);
 				}
 				ezFetch((baseUrl+magnet),function(data,size){
-					var regex=/(magnet.*?)\"/g;
+					var regex=/(magnet:.*?)\"/g;
 					var magnet=matchRegex(data,regex,1);
 					if(magnet.length===0){
 						console.log(data);
@@ -145,7 +157,7 @@ function findTorrents(socket,msg){
 	if(msg.includes("FindMovie---")){
 		var movieDetails=JSON.parse(msg.split("---")[1]);
 		var movieID = movieDetails.id;
-		var movieSearch = movieDetails.movieSearch.toString().replace(/[:']/gm,"");
+		var movieSearch = movieDetails.movieSearch.toString().replace(/[\:\(\)\']/gm,"");
 		var movieSearchTerm = movieSearch.replace(/-/gm," ");
 		console.log(movieSearchTerm);
 		
@@ -157,9 +169,13 @@ function findTorrents(socket,msg){
 			/><\/a><a href=\"(\/.*?)\"/g,
 			/([0-9\.]* [A-Z]*)<\/td><td class="tdseed">[0-9,]*<\/td>/g,
 			socket);
+		retrieveTorrents(rarBGURL,"torrents.php?category=14;48;17;44;45;42;46&search="+movieSearchTerm+"&order=seeders&by=DESC",
+			/href="(\/torrent\/[a-z0-9]*)\" title/g,
+			/100px" class="lista">([0-9\., GBbM]*)<\/td>/g,
+			socket);
+		
 			
 		searchTPB("https://thepiratebay3.org/index.php?q="+encodeURIComponent(movieSearchTerm)+"&category=207&page=0&orderby=99");
-		searchTPB("https://www.thepiratebay.se.net/search1.php?q="+encodeURIComponent(movieSearchTerm)+"&category=207&page=0&orderby=99");
-
+		searchTPB("https://www.thepiratebay.se.net/search/"+encodeURIComponent(movieSearchTerm));
 	}
 }

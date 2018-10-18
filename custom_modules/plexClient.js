@@ -14,21 +14,26 @@ function getMDBFromPlexID(key,cb){
 }
 
 function updatePlexMDBMapping(cb){
+	//console.log("updating cache");
 	plexWebRequest("/library/sections/2/all",function(xmlMovies){
 		var plexMovies=xmlMovies.MediaContainer.Video;
 		fs.readFileCreateIfNotExist(config.MDBToPlexIDPath,function(MDBToPlexIDMapping){
 			var missingPlexIDs=[];
 			var allPlexMovieIDs=[];
 			var deletedMovie=false;
+			//Create mapping of movies from plex library
 			for(var i=0;i<plexMovies.length;i++){
 				var plexID=plexMovies[i]['$'].ratingKey;
-				//if mdb id doesn't exist in mapping file:
+				//if mdb id doesn't exist in mapping file, add to list to be cached
 				if(Object.values(MDBToPlexIDMapping).indexOf(plexID)===-1){
 					missingPlexIDs.push(plexID);
 				}
 				allPlexMovieIDs.push(plexID);
 			}
-			//remove deleted items from cache
+			//find movies cached that are no longer in library
+			//console.log(allPlexMovieIDs.length);
+			//console.log(Object.keys(MDBToPlexIDMapping).length);
+			
 			for(var mdbID in MDBToPlexIDMapping){
 				var plexIDInFile=MDBToPlexIDMapping[mdbID];
 				if(allPlexMovieIDs.indexOf(plexIDInFile)===-1){
@@ -72,6 +77,7 @@ function updatePlexMDBMapping(cb){
 					});
 				});
 			}else{
+				//console.log("no work to do.");
 				cb();
 			}
 		});
@@ -88,13 +94,6 @@ function plexCall(uri,cb){
 	}).catch(function(err){
 		console.log("Plex Web Request Call Fail.")
 		console.log(err);
-		
-		if(err.code.toString().includes("ENOBUFS")){
-			process.exit();
-		}
-		if(err.code.toString().includes("EADDRINUSE")){
-			process.exit();
-		}
 	});
 }
 
@@ -130,13 +129,6 @@ function getPlexToken(cb){
 	}).catch(function(err){
 		console.log("Plex Token Call Fail.")
 		console.log(err.code);
-		
-		if(err.code.toString().includes("ENOBUFS")){
-			process.exit();
-		}
-		if(err.code.toString().includes("EADDRINUSE")){
-			process.exit();
-		}
 	});
 }
 

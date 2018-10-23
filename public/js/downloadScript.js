@@ -56,18 +56,16 @@ function populateDownloading(){
 	var movieDownloadDiv=$("#moviesDownloading");
 	var resultsString="";
 	for(var key in downloadResults){
-
+		console.log(Math.floor(downloadResults[key][0].status * 100));
+		var percentComplete=Math.floor(downloadResults[key][0].status * 100);
 		var results=downloadResults[key][1];
-		var downloadDetails=downloadResults[key][0];
 		var loadingWidth=0;
-		if(downloadDetails.status.match("([0-9.0-9]+) %")){
-			loadingWidth=downloadDetails.status.match("([0-9.0-9]+) %")[0].replace(" %","");
-		}
+
 		var movieTitleDisplay=results.title + " ("+(results.release_date.substring(0,4))+")";
 		resultsString+="<div class=\"downloadingWrapper\"><div style=background-image:url(\""
 		+IMGCDNPATH+results.poster_path+"\") class=\"downloadingThumb\" data-name="+results.id+
-		"><span class=\"movieTitle\">"+movieTitleDisplay+"</span><div style=\"width:"+loadingWidth+"%\" class=\"loadingBar\"></div><div class=\"movieDBButton\">&#10068;</div><div class=\"cancelMovie\">Cancel Download</div></div><div class=\"downloadingStatus\">"
-		+downloadDetails.status+"</div></div>";
+		"><span class=\"movieTitle\">"+movieTitleDisplay+"</span><div style=\"width:"+percentComplete+"%\" class=\"loadingBar\"></div><div class=\"movieDBButton\">&#10068;</div><div class=\"cancelMovie\">Cancel Download</div></div><div class=\"downloadingStatus\">"
+		+percentComplete+"%</div></div>";
 	}
 	movieDownloadDiv.html(resultsString);
 	//$(".loader").hide();
@@ -187,42 +185,58 @@ function applyClickFunctions(){
 			}
 		}	
 	});
-	$(".downloadButton, #torrentSearchButton").unbind('click').click(function(){
-			event.stopPropagation();
-			var torrentSearchName=$("#torrentSearchName");
-			var movieSearchString="";
-			if(torrentSearchName.length!==0){
-				movieSearchString=torrentSearchName.val();
-				var movieID=torrentSearchName.attr("data-name");
-			}else{
-				var parentNode=event.target.parentNode;
-				MovieData=findMovieById(JSON.parse(parentNode.getAttribute('data-name')));
-				var movieID=MovieData.id;
+	$(".downloadButton, #torrentSearchButton").unbind("click").click(function(){
+		console.log("clicked DL search");
+		event.stopPropagation();
+		var torrentSearchName=$("#torrentSearchName");
+		var movieSearchString="";
+		if(torrentSearchName.length!==0){
+			movieSearchString=torrentSearchName.val();
+			var movieID=torrentSearchName.attr("data-name");
+		}else{
+			var parentNode=event.target.parentNode;
+			MovieData=findMovieById(JSON.parse(parentNode.getAttribute('data-name')));
+			var movieID=MovieData.id;
+		}
+		$(".loader").show();
+		getMovieYear(movieID,function(movieYear){
+			if(movieYear==="fail"){
+				movieYear=MovieData.release_date.substring(0,4);
 			}
-			$(".loader").show();
-			getMovieYear(movieID,function(movieYear){
-				if(movieYear==="fail"){
-					movieYear=MovieData.release_date.substring(0,4);
-				}
-				if(movieSearchString===""){
-					movieSearchString=MovieData.title+" "+movieYear+" 1080p";
-				}
-				var movieSearchData="FindMovie---"+JSON.stringify({"id":movieID,"movieSearch":movieSearchString});
-				torrentResults=[];
-				socket.emit('torrentSearch', movieSearchData);
-				$("#searchResults").html("<div class=\"Header\"><form onsubmit=\"return false;\"><input id=\"torrentSearchName\" data-name=\""+movieID+"\" value=\""+movieSearchString+"\"></input><input id=\"torrentSearchButton\" type=\"submit\" value=\"Search\"></form></div><table id=\"torrentTable\"><tr><th>Name</th><th>Seeds</th><th>Size</th></tr></table>").show();
-				$("#searchContainer").show();
-				
+			if(movieSearchString===""){
+				movieSearchString=MovieData.title+" "+movieYear;
+			}
+			var movieSearchData="FindMovie---"+JSON.stringify({"id":movieID,"movieSearch":movieSearchString});
+			torrentResults=[];
+			socket.emit('torrentSearch', movieSearchData);
+			$("#searchResults").html("<div class=\"Header\"><form onsubmit=\"return false;\"><input id=\"torrentSearchName\" data-name=\""+movieID+"\" value=\""+movieSearchString+"\"></input><input id=\"torrentSearchButton\" type=\"submit\" value=\"Search\"></form></div><div id=\"searchStatus\"></div><table id=\"torrentTable\"><tr><th>Name</th><th>Seeds</th><th>Size</th></tr></table>").show();
+			$("#searchContainer").show();
+			$("#torrentTable").hide();
 
-				$("#nonSearchContainer, #closeButton").show().click(function(){
-					hideBoxes();
-				});
-				progress(0, 18, $('#progressBar'));
-				var searchTimer=setTimeout(function(){ 
-					$("#torrentTable").html("<h2>No Results Found.</h2>");
+			$("#nonSearchContainer, #closeButton").show().click(function(){
+				hideBoxes();
+			});
+			var searchTimer=undefined;
+			$("#searchStatus").html("<h4>Searching Torrent Indexes...</h4>");
+			socket.on('torrentIndex',function(resultCount){
+				$("#searchStatus").html("<h4>"+resultCount+" Torrents Found. Getting active seeder counts...</h4>");
+				progress(0, 20, $('#progressBar'));
+				searchTimer=setTimeout(function(){ 
+					$("#searchStatus").html("<h4>No Seeders Found.</h4>");
 					$(".loader").hide();
-				}, 18000);
-				socket.on('torrentSearch', function(msg){
+					$('#progressBar').hide();
+				}, 20000);
+			});
+			socket.on('torrentSearch', function(msg){
+				clearTimeout(searchTimer);
+				if(msg=="fail"){
+					$("#searchStatus").html("<h4>No Results Found.</h4>");
+					$(".loader").hide();
+					$('#progressBar').hide();
+					
+				}else{
+					$("#torrentTable").show();
+					$("#searchStatus").html("");
 					clearTimeout(searchTimer);
 					var torrentResult=JSON.parse(msg);
 					var movieName=parseTorrentNameFromMagnet(torrentResult.magnet);
@@ -250,10 +264,11 @@ function applyClickFunctions(){
 						});
 						$(".loader").hide();
 						torrentResults.push(movieName);
-					}			
-				});
+					}
+				}
 			});
-		//})
+		});
+
 
 	});
 	$(".movieDBButton").unbind('click').click(function(){

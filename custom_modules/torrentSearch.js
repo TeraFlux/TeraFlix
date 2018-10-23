@@ -1,47 +1,11 @@
 module.exports.searchTorrents=function (socket,msg){
 	findTorrents(socket,msg);
 };
-var fetch = require('fetch-cookie')(require('node-fetch'));
-var torrMEURL="https://www.torrentdownloads.me/";
-var limtTorrentsURL="https://www.limetorrents.info/";
-var rarBGURL="https://rarbg.to/";
 var config=require('../config.js');
-
-function ezFetch(url,cb,extra){
-	function retryOnce(){
-		fetch(encodedURL, {
-		method: "GET",
-		timeout: 3000, 
-		}).then(function(res) {
-			return res.text();
-		}).then(function(body) {
-			cb(body,extra);
-		}).catch(function(err){
-			//console.log(err);
-			console.log("Fetch Torrent Site Call Fail. "+encodedURL);
-			console.log(err.message);
-		});
-	}
-	
-	var encodedURL=encodeURI(url);
-	fetch(encodedURL, {
-	method: "GET",
-	timeout: 3000, 
-	}).then(function(res) {
-		return res.text();
-	}).then(function(body) {
-		cb(body,extra);
-	}).catch(function(err){
-		if(err.message.includes("timeout")){
-			retryOnce()
-		}else{
-		//console.log(err);
-			console.log("Fetch Torrent Site Call Fail. "+encodedURL);
-			console.log(err.message);
-		}
-	});
-	
-}
+const fetch=require("node-fetch");
+const parseString = require('xml2js-parser').parseString;
+var limit=100;
+function formatBytes(a,b){if(0==a)return"0 Bytes";var c=1024,d=b||2,e=["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"],f=Math.floor(Math.log(a)/Math.log(c));return parseFloat((a/Math.pow(c,f)).toFixed(d))+" "+e[f]}
 
 function findTorrents(socket,msg){
 	
@@ -65,7 +29,7 @@ function findTorrents(socket,msg){
 						  password: config.socks5.socks5Password
 					  }
 				  },
-				  timeout: 10000
+				  timeout: 4000
 			  },
 		  }
 		}
@@ -81,77 +45,8 @@ function findTorrents(socket,msg){
 		
 		setTimeout(function(){	
 			client.destroy();
-			cb({"magnet":magnet,"seeds":highestSeed,"size":size.replace("&nbsp;"," ")});
-		}, 10000);
-	}
-
-	function matchRegex(data,regex,count,cb){
-		let m;
-		var arr=[];
-		var counter=0
-		while ((m = regex.exec(data)) !== null) {
-			if (m.index === regex.lastIndex) {
-				regex.lastIndex++;
-			}
-			m.forEach((match, groupIndex) => {
-				if(groupIndex===1){
-					if(counter<count){
-						arr.push(match);
-					}else{
-						return arr;
-					}
-					counter++;
-				}
-			});
-		}
-		return arr;
-	}
-
-	function retrieveTorrents(baseUrl,search,scrapeMagnets,scrapeSize,socket){
-		ezFetch(baseUrl+search,function(body){
-			var magnetList=matchRegex(body,scrapeMagnets,20);
-			var sizeList=matchRegex(body,scrapeSize,20);
-			console.log(baseUrl);
-			console.log(magnetList.length);
-			for(var i in magnetList){
-				var magnet=magnetList[i].replace("//","/");
-				if(magnet.startsWith("/")){
-					magnet=magnet.substring(1);
-				}
-				ezFetch((baseUrl+magnet),function(data,size){
-					var regex=/(magnet:.*?)\"/g;
-					var magnet=matchRegex(data,regex,1);
-					if(magnet.length===0){
-						console.log(data);
-					}
-					getSeedsForMagnet(magnet,size,function(result){
-						if(size!==undefined){
-							socket.emit("torrentSearch",JSON.stringify(result));
-						}
-					});
-				},sizeList[i]);
-			}
-		})
-	}
-
-	function searchTPB(TPBURI){
-		ezFetch(TPBURI,function(body){
-			var scrapeMagnets=/(magnet:\?.*?)\"/g;
-			var scrapeSize=/, Size ([0-9.]*&nbsp;[GMBi]*)/g;
-			var magnetList=matchRegex(body,scrapeMagnets,20);
-			var sizeList=matchRegex(body,scrapeSize,20);
-			console.log(TPBURI);
-			console.log(magnetList.length);
-			for(var i in magnetList){
-				var magnet=magnetList[i].replace("//","/");
-				var size=sizeList[i];
-				getSeedsForMagnet(magnet,size,function(result){
-					if(size!==undefined){
-						socket.emit("torrentSearch",JSON.stringify(result));
-					}
-				});
-			}
-		});
+			cb({"magnet":magnet,"seeds":highestSeed,"size":size});
+		}, 12000);
 	}
 	
 	if(msg.includes("FindMovie---")){
@@ -159,23 +54,51 @@ function findTorrents(socket,msg){
 		var movieID = movieDetails.id;
 		var movieSearch = movieDetails.movieSearch.toString().replace(/[\:\(\)\']/gm,"");
 		var movieSearchTerm = movieSearch.replace(/-/gm," ");
+		var movieSearchTerm = movieSearchTerm.replace(/&/gm,"and");
+		
 		console.log(movieSearchTerm);
 		
-		retrieveTorrents(torrMEURL,"search/?s_cat=4&search="+movieSearchTerm,
-			/<a href=\"\/(torrent\/[0-9]{10}.*?)\"/g,
-			/<span>[0-9]*<\/span><span>[0-9]*<\/span><span>([0-9.]*&nbsp;[A-Z]*)<\/span><a class=\"cloud\" rel=\"nofollow\" href=\"\/torrent\/[0-9]{10}/g,
-			socket);
-		retrieveTorrents(limtTorrentsURL,"search/movies/"+encodeURIComponent(movieSearchTerm)+"/seeds/1/",
-			/><\/a><a href=\"(\/.*?)\"/g,
-			/([0-9\.]* [A-Z]*)<\/td><td class="tdseed">[0-9,]*<\/td>/g,
-			socket);
-		retrieveTorrents(rarBGURL,"torrents.php?category=14;48;17;44;45;42;46&search="+movieSearchTerm+"&order=seeders&by=DESC",
-			/href="(\/torrent\/[a-z0-9]*)\" title/g,
-			/100px" class="lista">([0-9\., GBbM]*)<\/td>/g,
-			socket);
-		
+		var magnetDupes=[];
+		var uri=config.jackett.uri+"/api/v2.0/indexers/all/results/torznab/?apikey="+config.jackett.apikey+"&t=search&limit="+limit+"&cat=2000,2040&q="+encodeURIComponent(movieSearchTerm);
+		fetch(uri).then(function(res) {
+			return res.text();
+		}).then(function(body){
 			
-		searchTPB("https://thepiratebay3.org/index.php?q="+encodeURIComponent(movieSearchTerm)+"&category=207&page=0&orderby=99");
-		searchTPB("https://www.thepiratebay.se.net/search/"+encodeURIComponent(movieSearchTerm));
+			parseString(body, (err, result) => {				
+				var items=result.rss.channel[0].item;
+				if(items!==undefined){
+					socket.emit("torrentIndex",items.length);
+					for(var i=0;i<items.length;i++){
+						var torResult=items[i];
+						var magnetURL=undefined;
+						var attributes=items[i]['torznab:attr'];
+						for(var attr in attributes){
+							if(attributes[attr]['$'].name === "magneturl"){
+								magnetURL=attributes[attr]['$'].value;
+								break;
+							}
+						}
+						if(magnetURL===undefined){continue}
+						//don't search duplicate magnets for seeders
+						if(!magnetDupes.includes(magnetURL)){
+							magnetDupes.push(magnetURL);	
+							getSeedsForMagnet(magnetURL,formatBytes(torResult.size[0]),function(seedResults){
+								socket.emit("torrentSearch",JSON.stringify(seedResults));
+							});
+						}	
+
+					}
+				}else{
+					console.log("no results found");
+					socket.emit("torrentSearch","fail");
+				}
+			});
+		}).catch(function(err){
+			console.log("Failed Jackett API Call.")
+			console.log(err);
+			socket.emit("torrentSearch","fail");
+		});
+			
+		
 	}
 }

@@ -10,12 +10,14 @@
     "xml2js-parser": "latest",
     "socket.io": "^1.7.3",
     "bittorrent-tracker-proxy": "latest",
+    "rarbg-api": "latest",
     "magnet-uri": "latest",
     "greenlock-express": "latest",
     "passport-google-oauth20": "latest",
     "passport": "latest",
     "cookie-parser": "latest",
-    "cookie-session": "latest"
+    "cookie-session": "latest",
+    "rimraf": "latest"
   },
   "author": "Keith Klein",
   "license": "MIT"

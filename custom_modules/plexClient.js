@@ -1,7 +1,6 @@
 var config=require("../config.js")
 var fetch = require('fetch-cookie')(require('node-fetch'));
 const parseString = require('xml2js-parser').parseString;
-var bodyParser = require('body-parser');
 var plexToken=undefined;
 var fs = require('./fileSystemClient.js');
 

@@ -50,15 +50,13 @@ app.get('/downloading', function (req, res, next) {
 	var downloadingList=[];
 	fs.getDownloadingList(function(downloadingData){
 		torrentClient.getTorrentData(function(torrentData){ 
-			var torrents=torrentData.torrents;
-			for(var i=0;i<torrents.length;i++){
-				var torrentHash=torrents[i][0].toLowerCase();
-				for(var id in downloadingData){
-					if(downloadingData[id]['torrentHash'].toLowerCase()===torrentHash){
-						downloadingList.push({'id':id,'hash':torrentHash,'status':torrents[i][21]});
-					}
+			for(var id in downloadingData){
+				torrentHash=downloadingData[id]['torrentHash'].toLowerCase();
+				if(torrentData[torrentHash]){
+					downloadingList.push({'id':id,'hash':torrentHash,'status':(torrentData[torrentHash].progress)});
 				}
 			}
+			
 			res.send(JSON.stringify(downloadingList));
 		});
 	});
@@ -102,7 +100,15 @@ function updatePlexInterval(interval){
 			updatePlexInterval(interval);
 		}, interval);
 	});
-	
+}
+
+function cleanupInterval(interval){
+	torrentClient.cleanUp(function(){
+		setTimeout(function(){ 
+			cleanupInterval(interval);
+		}, interval);
+	});
 }
 
 updatePlexInterval(20000);
+cleanupInterval(20000);

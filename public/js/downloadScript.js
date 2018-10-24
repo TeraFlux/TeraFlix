@@ -56,7 +56,6 @@ function populateDownloading(){
 	var movieDownloadDiv=$("#moviesDownloading");
 	var resultsString="";
 	for(var key in downloadResults){
-		console.log(Math.floor(downloadResults[key][0].status * 100));
 		var percentComplete=Math.floor(downloadResults[key][0].status * 100);
 		var results=downloadResults[key][1];
 		var loadingWidth=0;
@@ -118,7 +117,7 @@ function sortPopularity(obj) {
 function applyClickFunctions(){
 	
 	var progressTimer;
-	
+	var searchTimer=undefined;
 	function getMovieYear(movieDBID,cb){
 		var url= 'https://api.themoviedb.org/3/movie/'+movieDBID+'?api_key='+mdbAPIKey+'&language=en&callback=?';
 		$.ajax({
@@ -132,9 +131,7 @@ function applyClickFunctions(){
 			error: function(err){
 				console.log(err);
 			}
-
 		});
-		
 	}
 	
 	function progress(timeleft, timetotal, $element) {
@@ -162,7 +159,6 @@ function applyClickFunctions(){
 		$(".loader").hide();
 		$("#closeButton").hide();
 		clearTimeout(progressTimer);
-		socket.on('torrentSearch', function(){});
 		
 	}
 	$(".movieThumb, .notDownloadingThumb, .downloadingThumb").unbind('click').click(function(){
@@ -186,7 +182,7 @@ function applyClickFunctions(){
 		}	
 	});
 	$(".downloadButton, #torrentSearchButton").unbind("click").click(function(){
-		console.log("clicked DL search");
+		$('#progressBar').hide();
 		event.stopPropagation();
 		var torrentSearchName=$("#torrentSearchName");
 		var movieSearchString="";
@@ -216,10 +212,12 @@ function applyClickFunctions(){
 			$("#nonSearchContainer, #closeButton").show().click(function(){
 				hideBoxes();
 			});
-			var searchTimer=undefined;
+			
 			$("#searchStatus").html("<h4>Searching Torrent Indexes...</h4>");
+			socket.removeListener('torrentIndex');
 			socket.on('torrentIndex',function(resultCount){
 				$("#searchStatus").html("<h4>"+resultCount+" Torrents Found. Getting active seeder counts...</h4>");
+				clearTimeout(searchTimer);
 				progress(0, 20, $('#progressBar'));
 				searchTimer=setTimeout(function(){ 
 					$("#searchStatus").html("<h4>No Seeders Found.</h4>");
@@ -227,6 +225,7 @@ function applyClickFunctions(){
 					$('#progressBar').hide();
 				}, 20000);
 			});
+			socket.removeListener('torrentSearch');
 			socket.on('torrentSearch', function(msg){
 				clearTimeout(searchTimer);
 				if(msg=="fail"){
@@ -303,16 +302,10 @@ function applyClickFunctions(){
 			for(var i=0;i<sorted.length;i++){
 				movieResults.push(sorted[i][1]);
 			}
-
-			
 			for(var i=0;i<movieResults.length;i++){
 				mapPlexMoviePlexId(movieResults[i]);
 			}
 			populateMovieResults(movieResults,"actorMovieResults");
-
-			
-			
-			//console.log(movieResults);
 		})
 	});
 }
@@ -491,7 +484,6 @@ function searchDVDReleaseDate(title,movieID){
 				if(releaseDateJS.getTime() > todaysDate.getTime()){
 					console.log("not on dvd yet!!");
 					$("#"+movieID).css({"color":"red"});
-				
 				}
 			 }else{
 				 console.log(data.webPages.value[0].url);

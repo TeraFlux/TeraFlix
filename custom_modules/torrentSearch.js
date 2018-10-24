@@ -4,6 +4,7 @@ module.exports.searchTorrents=function (socket,msg){
 var config=require('../config.js');
 const fetch=require("node-fetch");
 const parseString = require('xml2js-parser').parseString;
+var _magnet = require('magnet-uri');
 var limit=100;
 function formatBytes(a,b){if(0==a)return"0 Bytes";var c=1024,d=b||2,e=["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"],f=Math.floor(Math.log(a)/Math.log(c));return parseFloat((a/Math.pow(c,f)).toFixed(d))+" "+e[f]}
 
@@ -11,7 +12,6 @@ function findTorrents(socket,msg){
 	
 	function getSeedsForMagnet(magnet,size,cb){
 		var torrentClient = require('./bittorrent-tracker-proxy');
-		var _magnet = require('magnet-uri');
 		var parsedTorrent = _magnet(magnet.toString());
 		var options = {
 		  infoHash: parsedTorrent.infoHash,
@@ -66,8 +66,9 @@ function findTorrents(socket,msg){
 			
 			parseString(body, (err, result) => {				
 				var items=result.rss.channel[0].item;
+				var realResultCount=0
 				if(items!==undefined){
-					socket.emit("torrentIndex",items.length);
+					
 					for(var i=0;i<items.length;i++){
 						var torResult=items[i];
 						var magnetURL=undefined;
@@ -80,14 +81,18 @@ function findTorrents(socket,msg){
 						}
 						if(magnetURL===undefined){continue}
 						//don't search duplicate magnets for seeders
-						if(!magnetDupes.includes(magnetURL)){
-							magnetDupes.push(magnetURL);	
+						realResultCount++;
+						var torrentHash = _magnet(magnetURL).infoHash;
+						//console.log(torrentHash);
+						if(!magnetDupes.includes(torrentHash)){
+							magnetDupes.push(torrentHash);	
 							getSeedsForMagnet(magnetURL,formatBytes(torResult.size[0]),function(seedResults){
 								socket.emit("torrentSearch",JSON.stringify(seedResults));
 							});
 						}	
 
 					}
+					socket.emit("torrentIndex",realResultCount);
 				}else{
 					console.log("no results found");
 					socket.emit("torrentSearch","fail");

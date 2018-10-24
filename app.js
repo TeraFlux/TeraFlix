@@ -102,13 +102,11 @@ function updatePlexInterval(interval){
 	});
 }
 
-function cleanupInterval(interval){
+setInterval(function(){ 
 	torrentClient.cleanUp(function(){
-		setTimeout(function(){ 
-			cleanupInterval(interval);
-		}, interval);
+		
 	});
-}
+}, 30000);
 
 updatePlexInterval(20000);
-cleanupInterval(20000);
+

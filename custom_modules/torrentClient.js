@@ -93,7 +93,6 @@ function downloadTorrent(req,cb){
 		});
 	}
 	
-
 	var magnet = decodeURIComponent(req.query.magnet);
 	var movieID = req.query.id;
 	var movieName = decodeURIComponent(req.query.movieName).replace(":","");
@@ -147,6 +146,9 @@ function moveFiles(fromPath,toName,cb){
 							cb()
 						});		
 					});
+				}else{
+					console.log("video file not found");
+					cb();
 				}
 			});
 		}else{
@@ -177,13 +179,22 @@ function cleanUp(complete){
 							var fromName=config.downloadDirectory+"\\"+torrentData.name;
 							cancelTorrent(torrentHash,function(){
 								moveFiles(fromName,folderName,function(){
-									complete();
+									//Update actively downloading disk status
+									delete downloadingData[movieID];
+									var json=JSON.stringify(downloadingData);
+									fs.writeFile(config.downloadingMoviesPath, json, function(err) {
+										if(err) {
+											return console.log(err);
+										}
+										complete();
+									}); 
+									
 								});
 							});
-							break
+							break; //once hash is found, end looping
 						}
 					}
-					break;
+					break; //only process one completed movie at a time
 				}
 			}
 		});

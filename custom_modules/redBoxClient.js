@@ -18,8 +18,8 @@ function parseRedbox(redBoxData){
 		var digitalCodeMatch=/ digitalcode/gm;
 		if(
 			newTitles.indexOf(movieName) === -1 && 
-			productType==="1" && 
-			redboxTitles[i].soon!=="1" &&
+			productType===1 && 
+			redboxTitles[i].soon!==1 &&
 			!(movieName.match(seasonRegex)) &&
 			!(movieName.match(bluRayMatch)) &&
 			!(movieName.match(digitalCodeMatch))

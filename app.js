@@ -8,9 +8,11 @@ var torrentSearch=require('./custom_modules/torrentSearch.js');
 var torrentClient=require('./custom_modules/torrentClient.js');
 var plexClient=require('./custom_modules/plexClient.js');
 var redBoxClient=require('./custom_modules/redBoxClient.js');
+var moviedbClient= require('./custom_modules/movieDBClient.js');
 var imdbClient=require('./custom_modules/imdbClient.js');
 var fs = require('./custom_modules/fileSystemClient.js');
 var googleAuthClient=require('./custom_modules/googleAuthClient.js').configureApp(app);
+
 
 var https = require('https');
 var server = https.createServer({
@@ -89,9 +91,19 @@ app.get('/searchMovieYear',function(req,res,next){
 
 app.get('/getRedBox', function (req, res, next) {
 	console.log("retrieving redbox list");
-	redBoxClient.getRedBoxData(function(result){
-		res.send(result);
+	redBoxClient.getRedBoxData(function(redBoxData){
+		res.send(JSON.stringify(redBoxData));
+
 	})
+});
+
+app.get('/getMovieDB', function (req, res, next) {
+	console.log("retrieving moviedb list");
+	moviedbClient.getPopularMovies(function(movieDBData){
+		res.send(JSON.stringify(movieDBData));
+	});
+	
+
 });
 
 function updatePlexInterval(interval){
@@ -110,3 +122,6 @@ setInterval(function(){
 
 updatePlexInterval(20000);
 
+torrentClient.cleanUp(function(){
+	
+});

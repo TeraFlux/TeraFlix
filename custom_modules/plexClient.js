@@ -14,7 +14,7 @@ function getMDBFromPlexID(key,cb){
 
 function updatePlexMDBMapping(cb){
 	//console.log("updating cache");
-	plexWebRequest("/library/sections/2/all",function(xmlMovies){
+	plexWebRequest("/library/sections/4/all",function(xmlMovies){
 		var plexMovies=xmlMovies.MediaContainer.Video;
 		fs.readFileCreateIfNotExist(config.MDBToPlexIDPath,function(MDBToPlexIDMapping){
 			var missingPlexIDs=[];

@@ -79,7 +79,7 @@ function downloadTorrent(req,cb){
 			downloadMagnet(magnet,function(){
 				console.log("Download Started: ");
 				var sanitizedMovieName=movieName.replace(/[/\\?%*:|"<>]/g,"");
-				console.log('torrentHash: '+hash+ ' folderName: '+ sanitizedMovieName + ' ('+movieYear+')');
+				console.log('movieID: '+movieID+' torrentHash: '+hash+ ' folderName: '+ sanitizedMovieName + ' ('+movieYear+')');
 				downloading[movieID]={'torrentHash':hash,'folderName':sanitizedMovieName + ' ('+movieYear+')'};
 				var json=JSON.stringify(downloading);
 				fs.writeFile(config.downloadingMoviesPath, json, function(err) {
@@ -163,42 +163,56 @@ function moveFiles(fromPath,toName,cb){
 }
 
 function cleanUp(complete){
+	
+	function cleanUpTorrents(position,torrentList,downloadingData){
+		if(torrentList.length > 0 && position < torrentList.length){
+			var movie=torrentList[position];
+			var torrentHash=movie.hash;
+			var fromName=movie.downloadPath;
+			var folderName=movie.folderName;
+			var movieID=movie.movieID;
+			cancelTorrent(torrentHash,function(){
+				moveFiles(fromName,folderName,function(){
+					delete downloadingData[movieID];
+					var json=JSON.stringify(downloadingData);
+					fs.writeFile(config.downloadingMoviesPath, json, function(err) {
+						if(err) {
+							return console.log(err);
+						}
+						cleanUpTorrents(position+1,torrentList,downloadingData);
+					}); 
+					
+				});
+			});
+		}else{
+			complete();
+		}
+	}
+	
+	var completedTorrentList=[];
 	getTorrentData(function(torrentDownloads){
 		fs.getDownloadingList(function(downloadingData){
-			for(var torrentHash in torrentDownloads){
-				var torrentData=torrentDownloads[torrentHash];
-				//COMPLETED TORRENTS:
+			for(var i in torrentDownloads){
+				var torrentData=torrentDownloads[i];
+				var torrentHash=i;
 				if(torrentData.progress===1){
-					for(var movieID in downloadingData){
+					for(var movieID in downloadingData){	
 						var downloadingHash=downloadingData[movieID].torrentHash;
-						var folderName=downloadingData[movieID].folderName;
 						if(downloadingHash.toLowerCase()===torrentHash){
-							//TORRENT NAME=FOLDERNAME
-							//Download Directory 
-							console.log(torrentData.name + " Complete! Starting Copy to Movies Directory");
+							var folderName=downloadingData[movieID].folderName;
 							var fromName=config.downloadDirectory+"\\"+torrentData.name;
-							cancelTorrent(torrentHash,function(){
-								moveFiles(fromName,folderName,function(){
-									//Update actively downloading disk status
-									delete downloadingData[movieID];
-									var json=JSON.stringify(downloadingData);
-									fs.writeFile(config.downloadingMoviesPath, json, function(err) {
-										if(err) {
-											return console.log(err);
-										}
-										complete();
-									}); 
-									
-								});
-							});
-							break; //once hash is found, end looping
+							completedTorrentList.push({"downloadPath":fromName,"folderName":folderName,"hash":torrentHash,"movieID":movieID});
 						}
 					}
-					break; //only process one completed movie at a time
 				}
 			}
+			//console.log("Completed Torrent List:");
+			//console.log(completedTorrentList);
+			cleanUpTorrents(0,completedTorrentList,downloadingData);
 		});
 	});
+	
+	
 }
 
 module.exports.cancelTorrent=cancelTorrent;

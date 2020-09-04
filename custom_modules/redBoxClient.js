@@ -1,4 +1,4 @@
-var redboxURL="https://www.redbox.com/rbweb/api/product/js/_dtitles7"; 
+var redboxURL="https://www.redbox.com/rbweb/api/product/js/__titles7"; 
 
 var fetch = require('fetch-cookie')(require('node-fetch'));
 
@@ -10,7 +10,6 @@ function parseRedbox(redBoxData){
 	redboxTitles.sort(compare);
 	var newTitles=[];
 	for(i=0;i<redboxTitles.length && i<500;i++){
-		
 		var movieName=redboxTitles[i].name.replace(/-/g, ' ');
 		var productType=redboxTitles[i].productType;
 		var seasonRegex=/season [0-9]/gm;
@@ -38,7 +37,7 @@ function getRedBoxData(cb){
 	}).then(function(res) {
 		return res.text();
 	}).then(function(body) {
-		cb(JSON.stringify(parseRedbox(body)));
+		cb(parseRedbox(body));
 	}).catch(function(err){
 		console.log("redbox fetch error")
 		console.log(err);

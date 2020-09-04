@@ -8,7 +8,7 @@
     "cheerio": "latest",
     "fetch-cookie": "latest",
     "xml2js-parser": "latest",
-    "socket.io": "^1.7.3",
+    "socket.io": "^2.2.0",
     "bittorrent-tracker-proxy": "latest",
     "rarbg-api": "latest",
     "magnet-uri": "latest",
